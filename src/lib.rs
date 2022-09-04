@@ -68,28 +68,33 @@ impl CountContract{
         self.balance_send += deposit;
     }
 
-    pub fn add_info(&mut self, citizen_id: String,name: String, age: u8){
-        let info = InformationV2 { name, age, citizen_id};
+    pub fn add_info(&mut self,country_name: String, citizen_id: String,name: String, age: u8){
+        let info = InformationV3 { name, age, citizen_id, country_name};
 
         self.info.insert(&env::predecessor_account_id(), &UpgradeInfo::from(info));
     }
 
+    pub fn add_info_v2(&mut self, citizen_id: String,name: String, age: u8){
+        let info = InformationV3 { name, age, citizen_id, country_name: "ABC".to_string()};
 
-    pub fn get_info(&self, account_id: AccountId) -> Option<InformationV2>{
+        self.info.insert(&env::predecessor_account_id(), &UpgradeInfo::from(info));
+    }
+
+    pub fn get_info(&self, account_id: AccountId) -> Option<InformationV3>{
         let upgrade_info = self.info.get(&account_id);
         if upgrade_info.is_none(){
             None
         } else {
-            Some(InformationV2::from(upgrade_info.unwrap()))
+            Some(InformationV3::from(upgrade_info.unwrap()))
         }
     }
 
 
-    pub fn get_all_info(&self) -> Vec<InformationV2>{ 
+    pub fn get_all_info(&self) -> Vec<InformationV3>{ 
         self.info
             .values_as_vector()
             .iter()
-            .map(|upgrade_info| InformationV2::from(upgrade_info))
+            .map(|upgrade_info| InformationV3::from(upgrade_info))
             .collect()
     }
 }
