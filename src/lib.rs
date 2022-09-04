@@ -17,7 +17,7 @@ pub enum StorageKeys {
 pub struct CountContractV1{
     pub count_num: usize,
     pub balance_send: Balance,
-    pub info: UnorderedMap<AccountId,InformationV1>,
+    pub info: UnorderedMap<AccountId,UpgradeInfo>,
 }
 
 
@@ -26,7 +26,7 @@ pub struct CountContractV1{
 pub struct CountContract{
     pub count_num: usize,
     pub balance_send: Balance,
-    pub info: UnorderedMap<AccountId,InformationV1>,
+    pub info: UnorderedMap<AccountId,UpgradeInfo>,
     pub new_data: U128
 }
 
@@ -53,7 +53,7 @@ impl CountContract{
             new_data: U128(0)
         }
     }
-    
+
     pub fn increment_count(&mut self, count: usize) {
         self.internal_increment_count(count);
     }
@@ -68,22 +68,29 @@ impl CountContract{
         self.balance_send += deposit;
     }
 
-    pub fn add_info(&mut self,name: String, age: u8){
-        let info = InformationV1 { name, age};
+    pub fn add_info(&mut self, citizen_id: String,name: String, age: u8){
+        let info = InformationV2 { name, age, citizen_id};
 
-        self.info.insert(&env::predecessor_account_id(), &info);
+        self.info.insert(&env::predecessor_account_id(), &UpgradeInfo::from(info));
     }
 
 
-    pub fn get_info(&self, account_id: AccountId) -> Option<InformationV1>{
-        self.info.get(&account_id)
+    pub fn get_info(&self, account_id: AccountId) -> Option<InformationV2>{
+        let upgrade_info = self.info.get(&account_id);
+        if upgrade_info.is_none(){
+            None
+        } else {
+            Some(InformationV2::from(upgrade_info.unwrap()))
+        }
     }
 
 
-    pub fn get_all_info(&self) -> Vec<InformationV1>{ 
+    pub fn get_all_info(&self) -> Vec<InformationV2>{ 
         self.info
             .values_as_vector()
-            .to_vec()
+            .iter()
+            .map(|upgrade_info| InformationV2::from(upgrade_info))
+            .collect()
     }
 }
 
