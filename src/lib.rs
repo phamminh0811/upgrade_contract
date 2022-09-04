@@ -12,13 +12,22 @@ pub enum StorageKeys {
 }
 
 
+
+#[derive(BorshSerialize, BorshDeserialize, PanicOnDefault)]
+pub struct CountContractV1{
+    pub count_num: usize,
+    pub balance_send: Balance,
+    pub info: UnorderedMap<AccountId,InformationV1>,
+}
+
+
 #[near_bindgen]
 #[derive(BorshSerialize, BorshDeserialize, PanicOnDefault)]
 pub struct CountContract{
     pub count_num: usize,
     pub balance_send: Balance,
     pub info: UnorderedMap<AccountId,InformationV1>,
-
+    pub new_data: U128
 }
 
 #[near_bindgen]
@@ -29,7 +38,19 @@ impl CountContract{
             count_num: 0,
             balance_send: 0,
             info: UnorderedMap::new(StorageKeys::List),
-           
+            new_data: U128(0)
+        }
+    }
+
+    #[private]
+    #[init(ignore_state)]
+    pub fn migrate() -> Self {
+        let contract_v1 : CountContractV1 = env::state_read().expect("Can't read state");
+        Self {
+            count_num : contract_v1.count_num,
+            balance_send: contract_v1.balance_send,
+            info: contract_v1.info,
+            new_data: U128(0)
         }
     }
     
